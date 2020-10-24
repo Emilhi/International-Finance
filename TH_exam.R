@@ -415,6 +415,55 @@ output[3,1] = "Standard deviation"
 output[4,1] = "Sharpe ratio"
 
 
+# Crate a long-short portfolio (portf. 2-6 on 1)
+ls_portfolio <- avg_log_excess_ret %>%
+  mutate(p2_min_p1 = p2-p1,
+         p3_min_p1 = p3-p1,
+         p4_min_p1 = p4-p1,
+         p5_min_p1 = p5-p1,
+         p6_min_p1 = p6-p1) %>%
+  select(-c(p1,p2,p3,p4,p5,p6))
+
+ls_portfolio.sum <- ls_portfolio %>%
+  summarise(p2_min_p1 = 12*mean(p2_min_p1, na.rm = T),
+            p3_min_p1 = 12*mean(p3_min_p1, na.rm = T),
+            p4_min_p1 = 12*mean(p4_min_p1, na.rm = T),
+            p5_min_p1 = 12*mean(p5_min_p1, na.rm = T),
+            p6_min_p1 = 12*mean(p6_min_p1, na.rm = T))
+
+
+ls_portfolio.sd <- ls_portfolio %>%
+  summarise(p2_min_p1 = 12*sd(p2_min_p1, na.rm = T),
+            p3_min_p1 = 12*sd(p3_min_p1, na.rm = T),
+            p4_min_p1 = 12*sd(p4_min_p1, na.rm = T),
+            p5_min_p1 = 12*sd(p5_min_p1, na.rm = T),
+            p6_min_p1 = 12*sd(p6_min_p1, na.rm = T))
+
+ls_portfolio.sum <- ls_portfolio.sum %>%
+  pivot_longer(cols = starts_with("p"),
+               names_to = "Portfolio",
+               values_to = "Avg. excess return")
+ls_portfolio.sd <- ls_portfolio.sd %>%
+  pivot_longer(cols = starts_with("p"),
+               names_to = "Portfolio",
+               values_to = "A Standard deviation")
+
+ls_portfolio.SR <- ls_portfolio.sum
+ls_portfolio.SR <- left_join(ls_portfolio.SR, ls_portfolio.sd)
+ls_portfolio.SR <- ls_portfolio.SR %>%
+  mutate("A SR" = (`Avg. excess return`/`A Standard deviation`)*sqrt(12))
+
+ls_portfolio.SR <- ls_portfolio.SR %>%
+  pivot_longer(cols = starts_with("A"),
+               names_to = "Variable",
+               values_to = "Value")
+ls_portfolio.SR <- ls_portfolio.SR %>%
+  pivot_wider(names_from = "Portfolio",
+              values_from = "Value")
+
+ls_portfolio.SR[2,1] = "Standard deviation"
+ls_portfolio.SR[3,1] = "Sharpe ratio"
+
 # Q. B6
 #=======
 
@@ -479,6 +528,7 @@ print("==================PART B2====================")
 
 print("2B: Main computations:")
 output
+ls_portfolio.SR
 
 print(c("2B.Q7:", mean_excess_ret_p6_min_p1))
 print("2B.Q6:")
